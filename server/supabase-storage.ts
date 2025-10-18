@@ -1,6 +1,5 @@
 
-import pkg from 'pg';
-const { Pool } = pkg;
+import { createClient } from '@supabase/supabase-js';
 import { 
   type Coin, type InsertCoin, type UpdateCoin,
   type ScrapedContent, type InsertScrapedContent,
@@ -13,154 +12,145 @@ import {
   type LoginStreak, type InsertLoginStreak, type UpdateLoginStreak
 } from '@shared/schema';
 
-const databaseUrl = process.env.DATABASE_URL!;
+// Initialize Supabase client with service role key for full database access
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-const pool = new Pool({
-  connectionString: databaseUrl,
-  max: 10,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
-});
+if (!supabaseUrl || !supabaseServiceKey) {
+  throw new Error('Missing Supabase configuration. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in .env');
+}
+
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 export class SupabaseStorage {
   // ===== COINS =====
   async getAllCoins(): Promise<Coin[]> {
-    const client = await pool.connect();
-    try {
-      const result = await client.query('SELECT * FROM coins ORDER BY created_at DESC');
-      return result.rows as Coin[];
-    } finally {
-      client.release();
-    }
+    const { data, error } = await supabase
+      .from('coins')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    return data as Coin[];
   }
 
   async getCoin(id: string): Promise<Coin | undefined> {
-    const client = await pool.connect();
-    try {
-      const result = await client.query('SELECT * FROM coins WHERE id = $1', [id]);
-      return result.rows[0] as Coin | undefined;
-    } finally {
-      client.release();
-    }
+    const { data, error } = await supabase
+      .from('coins')
+      .select('*')
+      .eq('id', id)
+      .single();
+    
+    if (error && error.code !== 'PGRST116') throw error; // PGRST116 is "not found"
+    return data as Coin | undefined;
   }
 
   async getCoinByAddress(address: string): Promise<Coin | undefined> {
-    const client = await pool.connect();
-    try {
-      const result = await client.query('SELECT * FROM coins WHERE address = $1', [address]);
-      return result.rows[0] as Coin | undefined;
-    } finally {
-      client.release();
-    }
+    const { data, error } = await supabase
+      .from('coins')
+      .select('*')
+      .eq('address', address)
+      .single();
+    
+    if (error && error.code !== 'PGRST116') throw error;
+    return data as Coin | undefined;
   }
 
   async getCoinsByCreator(creator: string): Promise<Coin[]> {
-    const client = await pool.connect();
-    try {
-      const result = await client.query(
-        'SELECT * FROM coins WHERE creator_wallet = $1 ORDER BY created_at DESC',
-        [creator]
-      );
-      return result.rows as Coin[];
-    } finally {
-      client.release();
-    }
+    const { data, error } = await supabase
+      .from('coins')
+      .select('*')
+      .eq('creator_wallet', creator)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data as Coin[];
   }
 
   async createCoin(insertCoin: InsertCoin): Promise<Coin> {
-    const client = await pool.connect();
-    try {
-      const result = await client.query(
-        `INSERT INTO coins (
-          id, name, symbol, address, creator_wallet, status, 
-          scraped_content_id, ipfs_uri, chain_id, registry_tx_hash, 
-          metadata_hash, registered_at, created_at, image, description
-        ) VALUES (
-          gen_random_uuid()::text, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), $12, $13
-        ) RETURNING *`,
-        [
-          insertCoin.name, insertCoin.symbol, insertCoin.address, insertCoin.creator_wallet,
-          insertCoin.status || 'pending', insertCoin.scrapedContentId, insertCoin.ipfsUri,
-          insertCoin.chainId, insertCoin.registryTxHash, insertCoin.metadataHash,
-          insertCoin.registeredAt, insertCoin.image, insertCoin.description
-        ]
-      );
-      return result.rows[0] as Coin;
-    } finally {
-      client.release();
-    }
+    const { data, error } = await supabase
+      .from('coins')
+      .insert({
+        name: insertCoin.name,
+        symbol: insertCoin.symbol,
+        address: insertCoin.address,
+        creator_wallet: insertCoin.creator_wallet,
+        status: insertCoin.status || 'pending',
+        scraped_content_id: insertCoin.scrapedContentId,
+        ipfs_uri: insertCoin.ipfsUri,
+        chain_id: insertCoin.chainId,
+        registry_tx_hash: insertCoin.registryTxHash,
+        metadata_hash: insertCoin.metadataHash,
+        registered_at: insertCoin.registeredAt,
+        image: insertCoin.image,
+        description: insertCoin.description,
+        created_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data as Coin;
   }
 
   async updateCoin(id: string, update: UpdateCoin): Promise<Coin | undefined> {
-    const client = await pool.connect();
-    try {
-      const fields: string[] = [];
-      const values: any[] = [];
-      let paramCount = 1;
+    const { data, error } = await supabase
+      .from('coins')
+      .update({
+        ...(update.address !== undefined && { address: update.address }),
+        ...(update.status !== undefined && { status: update.status })
+      })
+      .eq('id', id)
+      .select()
+      .single();
 
-      if (update.address !== undefined) {
-        fields.push(`address = $${paramCount++}`);
-        values.push(update.address);
-      }
-      if (update.status !== undefined) {
-        fields.push(`status = $${paramCount++}`);
-        values.push(update.status);
-      }
-
-      if (fields.length === 0) return this.getCoin(id);
-
-      values.push(id);
-      const result = await client.query(
-        `UPDATE coins SET ${fields.join(', ')} WHERE id = $${paramCount} RETURNING *`,
-        values
-      );
-      return result.rows[0] as Coin | undefined;
-    } finally {
-      client.release();
-    }
+    if (error) throw error;
+    return data as Coin;
   }
 
   // ===== SCRAPED CONTENT =====
   async getScrapedContent(id: string): Promise<ScrapedContent | undefined> {
-    const client = await pool.connect();
-    try {
-      const result = await client.query('SELECT * FROM scraped_content WHERE id = $1', [id]);
-      return result.rows[0] as ScrapedContent | undefined;
-    } finally {
-      client.release();
-    }
+    const { data, error } = await supabase
+      .from('scraped_content')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error && error.code !== 'PGRST116') throw error;
+    return data as ScrapedContent | undefined;
   }
 
   async createScrapedContent(content: InsertScrapedContent): Promise<ScrapedContent> {
-    const client = await pool.connect();
-    try {
-      const result = await client.query(
-        `INSERT INTO scraped_content (
-          id, url, platform, title, description, author, publish_date, 
-          image, content, tags, metadata, scraped_at
-        ) VALUES (
-          gen_random_uuid()::text, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW()
-        ) RETURNING *`,
-        [
-          content.url, content.platform || 'blog', content.title, content.description,
-          content.author, content.publishDate, content.image, content.content,
-          JSON.stringify(content.tags || []), JSON.stringify(content.metadata || {})
-        ]
-      );
-      return result.rows[0] as ScrapedContent;
-    } finally {
-      client.release();
-    }
+    const { data, error } = await supabase
+      .from('scraped_content')
+      .insert({
+        url: content.url,
+        platform: content.platform || 'blog',
+        title: content.title,
+        description: content.description,
+        author: content.author,
+        publish_date: content.publishDate,
+        image: content.image,
+        content: content.content,
+        tags: content.tags || [],
+        metadata: content.metadata || {},
+        scraped_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data as ScrapedContent;
   }
 
   async getAllScrapedContent(): Promise<ScrapedContent[]> {
-    const client = await pool.connect();
-    try {
-      const result = await client.query('SELECT * FROM scraped_content ORDER BY scraped_at DESC');
-      return result.rows as ScrapedContent[];
-    } finally {
-      client.release();
-    }
+    const { data, error } = await supabase
+      .from('scraped_content')
+      .select('*')
+      .order('scraped_at', { ascending: false });
+
+    if (error) throw error;
+    return data as ScrapedContent[];
   }
 
   // ===== REWARDS =====

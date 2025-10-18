@@ -1,3 +1,7 @@
+// ensure .env is loaded in development so process.env.DATABASE_URL is available
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { storage } from "./storage";
