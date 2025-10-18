@@ -1,0 +1,77 @@
+why still having the object object redicrect errors after this
+
+BW
+
+willbur30005
+Assistant
+8 minutes ago
+Looking at the error you're describing and the chat history, I can see the issue is still occurring with [object Object] in URLs. Let me investigate the root cause more thoroughly.
+
+The previous fix addressed notifications, but the issue appears to be more widespread. Let me check for other places where objects might be passed to navigation:
+
+Based on the error URL https://...replit.dev/[object%20Object], this is happening when something tries to navigate using an object instead of a string. Let me search for the actual problematic code:
+
+The issue is likely in the FAQ page's social links. Looking at the code, I can see the links were recently updated, but there might be other navigation issues. Let me check the Layout component and other navigation points:
+
+I found the issue! In client/src/components/layout.tsx, there's a Link component usage that might be causing problems. The issue is that wouter's Link component expects a string href prop, but somewhere an object is being passed.
+
+Let me fix the remaining navigation issues:
+
+client/src/components/layout.tsx
+Now let me check if there are any issues with the trade modal tabs. The tabs might not be clickable due to pointer events or z-index issues:
+
+client/src/components/trade-modal.tsx
+The issues you're experiencing are caused by:
+
+[object Object] URLs: Objects being passed where strings are expected in navigation
+Tabs not clickable: Pointer events being blocked by dialog overlay handlers
+The fixes I've applied:
+
+Ensured all href values are strings in the Layout component
+Added explicit pointer-events-auto and cursor-pointer to tab triggers
+Removed the onPointerDownOutside handler that was intercepting clicks inside the modal
+Added proper z-index to the tabs list
+These changes should resolve both the redirect errors and the unclickable tabs.
+
+Checkpoint made
+Fix navigation and tab click issues
+23 minutes ago
+•
+see this
+
+BW
+
+willbur30005
+Assistant
+just now
+Looking at your attached message and the issues you're experiencing, I can see that the [object Object] redirect errors are likely coming from multiple places in your codebase where objects are being passed to navigation instead of strings.
+
+Let me search for and fix the remaining problematic navigation calls:
+
+client/src/components/coin-card.tsx
+Fix navigation to use string path instead of object
+Let me check the notification click handlers more thoroughly:
+
+client/src/pages/notifications.tsx
+Add defensive check for navigation path to prevent [object Object] errors
+Now let me add a global navigation guard to catch any remaining issues:
+
+client/src/App.tsx
+Add navigation guard to prevent [object Object] URLs Add navigation guard to prevent [object Object] URLs
+Let me also check the search page for any object navigation:
+
+client/src/pages/search.tsx
+Ensure coin card clicks use string paths
+Now let me check the home page as well:
+
+client/src/pages/home.tsx
+Add validation for coin clicks to prevent object navigation
+These changes will:
+
+Add a global URL guard in App.tsx that catches any [object Object] URLs and redirects to home
+Add defensive checks in notification clicks to validate coinAddress is a string
+Add validation in search and home page coin clicks to ensure proper coin data
+Log errors when invalid navigation is attempted so you can trace the source
+The global guard in App.tsx will act as a safety net - if any [object Object] URL is detected, it will immediately redirect to the home page and log an error. This will help you identify which component is still causing the issue by checking the browser console.
+
+For the trade modal tabs issue, the previous fixes with pointer-events-auto and removing the problematic onPointerDownOutside handler should have resolved it. If tabs are still not clickable, check the browser console for any JavaScript errors that might be preventing click events.

@@ -1,0 +1,15 @@
+node_modules
+.env
+.env.local
+.replit
+replit.nix
+.git
+.gitignore
+*.log
+.DS_Store
+.vscode
+.idea
+dist/index.js
+server/index.ts
+README.md
+replit.md

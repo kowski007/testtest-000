@@ -1,0 +1,38 @@
+ 
+ POST https://06af28b2-acc2-4093-9634-781c1d2a6d59-00-3a6zlhbyjg727.riker.replit.dev/api/activity-tracker/sync 500 (Internal Server Error)
+apiRequest	@	src/lib/queryClient.ts:9
+mutationFn	@	src/pages/admin.tsx:77
+fn	@	@fs/home/runner/work….js?v=8f50a030:1189
+run	@	@fs/home/runner/work…T.js?v=8f50a030:494
+start	@	@fs/home/runner/work…T.js?v=8f50a030:536
+execute	@	@fs/home/runner/work….js?v=8f50a030:1225
+await in execute		
+mutate	@	@fs/home/runner/work….js?v=8f50a030:2630
+(anonymous)	@	@fs/home/runner/work….js?v=8f50a030:3295
+onClick	@	src/pages/admin.tsx:1427
+callCallback2	@	@fs/home/runner/work….js?v=8f50a030:3674
+invokeGuardedCallbackDev	@	@fs/home/runner/work….js?v=8f50a030:3699
+invokeGuardedCallback	@	@fs/home/runner/work….js?v=8f50a030:3733
+invokeGuardedCallbackAndCatchFirstError	@	@fs/home/runner/work….js?v=8f50a030:3736
+executeDispatch	@	@fs/home/runner/work….js?v=8f50a030:7014
+processDispatchQueueItemsInOrder	@	@fs/home/runner/work….js?v=8f50a030:7034
+processDispatchQueue	@	@fs/home/runner/work….js?v=8f50a030:7043
+dispatchEventsForPlugins	@	@fs/home/runner/work….js?v=8f50a030:7051
+(anonymous)	@	@fs/home/runner/work….js?v=8f50a030:7174
+batchedUpdates$1	@	@fs/home/runner/work…js?v=8f50a030:18913
+batchedUpdates	@	@fs/home/runner/work….js?v=8f50a030:3579
+dispatchEventForPluginEventSystem	@	@fs/home/runner/work….js?v=8f50a030:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay	@	@fs/home/runner/work….js?v=8f50a030:5478
+dispatchEvent	@	@fs/home/runner/work….js?v=8f50a030:5472
+dispatchDiscreteEvent	@	@fs/home/runner/work….js?v=8f50a030:5449
+ Platform reward missing amount: 
+{id: '843c96c7-a848-48b3-ab9e-6803e6230837', type: 'platform', coin_address: '0x9d05b32d78142f008322c2ca76f26889b5d1e8cf', coin_symbol: 'GRTYFLNT', transaction_hash: '0xe3d440e79a7621bd8b33f9b962d859a80a555931f4950fe567418240bd123623', …}
+ Trade reward missing amount: 
+{id: 'f649769b-1564-42d8-8df1-ec64270515c3', type: 'trade', coin_address: '0x9d05b32d78142f008322c2ca76f26889b5d1e8cf', coin_symbol: 'GRTYFLNT', transaction_hash: '0xe3d440e79a7621bd8b33f9b962d859a80a555931f4950fe567418240bd123623', …}
+ Privy iframe failed to load:  Error: Exceeded max attempts before resolving function
+    at @fs/home/runner/work…v=8f50a030:69479:16
+
+ ✅ Actual ZORA balance from blockchain: 0.0683
+ Platform reward missing amount: 
+{id: '843c96c7-a848-48b3-ab9e-6803e6230837', type: 'platform', coin_address: '0x9d05b32d78142f008322c2ca76f26889b5d1e8cf', coin_symbol: 'GRTYFLNT', transaction_hash: '0xe3d440e79a7621bd8b33f9b962d859a80a555931f4950fe567418240bd123623', …}
+ Trade reward missing amount: 
