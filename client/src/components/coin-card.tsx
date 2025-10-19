@@ -528,6 +528,27 @@ export default function CoinCard({
       <div
         className={`relative w-full aspect-square bg-gradient-to-br from-muted/20 to-muted/10 overflow-hidden ${!isOwnCoin ? "cursor-pointer hover:opacity-90 transition-opacity" : ""}`}
       >
+        {/* Category Badge */}
+        <div className="absolute top-1.5 left-1.5 z-10 flex flex-col gap-1">
+          {/* Category Badge (platform) */}
+          <Badge 
+            variant="secondary" 
+            className="text-[9px] bg-primary/20 backdrop-blur-sm border-primary/20 text-primary-foreground px-1.5 py-0.5 rounded-md"
+          >
+            {coin.scrapedContentId ? (coin as any).metadata?.platform || 'Blog' : 'NFT'}
+          </Badge>
+          
+          {/* Tag Badge (if available) */}
+          {coin.scrapedContentId && (coin as any).metadata?.tags?.[0] && (
+            <Badge 
+              variant="outline" 
+              className="text-[9px] bg-black/30 backdrop-blur-sm border-muted/30 text-muted-foreground px-1.5 py-0.5 rounded-md"
+            >
+              #{(coin as any).metadata.tags[0]}
+            </Badge>
+          )}
+        </div>
+
         <div className="absolute top-1.5 right-1.5 flex items-center gap-0.5 rounded px-1.5 py-0.5 z-10">
           <span className="text-[8px] text-muted-foreground font-medium">
             {localCoin.createdAt && !isNaN(new Date(localCoin.createdAt).getTime())

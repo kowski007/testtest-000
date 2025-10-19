@@ -93,30 +93,56 @@ export type InsertReward = z.infer<typeof insertRewardSchema>;
 export type Reward = typeof rewards.$inferSelect;
 
 // Notifications
-export const notifications = pgTable("notifications", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: text("user_id").notNull(), // Wallet address
-  type: text("type").notNull(), // 'coin_created', 'trade', 'buy', 'sell', 'reward'
-  title: text("title").notNull(),
-  message: text("message").notNull(),
-  coinAddress: text("coin_address"),
-  coinSymbol: text("coin_symbol"),
-  amount: text("amount"),
-  transactionHash: text("transaction_hash"),
-  read: boolean("read").notNull().default(false),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+export interface Notification {
+  id: string;
+  creator_id: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  metadata?: NotificationMetadata;
+  read: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export type NotificationType = 
+  | 'points_earned'
+  | 'streak_milestone'
+  | 'coin_created'
+  | 'trade_completed'
+  | 'referral_bonus'
+  | 'zora_rewards';
+
+export interface NotificationMetadata {
+  points?: number;
+  reason?: string;
+  totalPoints?: number;
+  shareText?: string;
+  streakDays?: number;
+  coinId?: string;
+  tradeId?: string;
+  referralCode?: string;
+  zoraAmount?: number;
+}
+
+export const notificationSchema = z.object({
+  id: z.string(),
+  creator_id: z.string(),
+  type: z.string(),
+  title: z.string(),
+  message: z.string(),
+  metadata: z.record(z.any()).optional(),
+  read: z.boolean(),
+  created_at: z.string(),
+  updated_at: z.string()
 });
 
-export const insertNotificationSchema = createInsertSchema(notifications).omit({
+export const insertNotificationSchema = notificationSchema.omit({
   id: true,
-  createdAt: true,
-  read: true,
-}).extend({
-  type: z.enum(['coin_created', 'trade', 'buy', 'sell', 'reward', 'trending', 'performance']),
+  created_at: true,
+  updated_at: true,
+  read: true
 });
-
-export type InsertNotification = z.infer<typeof insertNotificationSchema>;
-export type Notification = typeof notifications.$inferSelect;
 
 export const creators = pgTable("creators", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

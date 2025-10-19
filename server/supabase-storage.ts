@@ -13,10 +13,16 @@ import {
 } from '@shared/schema';
 
 // Initialize Supabase client with service role key for full database access
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+console.log('Loading Supabase configuration...');
+
+// Hardcoded configuration for development
+const supabaseUrl = 'https://hgwhbdlejogerdghkxac.supabase.co';
+const supabaseServiceKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhnd2hiZGxlam9nZXJkZ2hreGFjIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MDc1MzI4NiwiZXhwIjoyMDc2MzI5Mjg2fQ.pTy3zUBuCUqZJd-tC4VXu-HYCO1SfrObTGh2eXHYY3g';
 
 if (!supabaseUrl || !supabaseServiceKey) {
+  console.error('Environment configuration error:');
+  console.error('NEXT_PUBLIC_SUPABASE_URL:', supabaseUrl ? 'set' : 'missing');
+  console.error('SUPABASE_SERVICE_ROLE_KEY:', supabaseServiceKey ? 'set' : 'missing');
   throw new Error('Missing Supabase configuration. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in .env');
 }
 
@@ -155,205 +161,512 @@ export class SupabaseStorage {
 
   // ===== REWARDS =====
   async getReward(id: string): Promise<Reward | undefined> {
-    const client = await pool.connect();
-    try {
-      const result = await client.query('SELECT * FROM rewards WHERE id = $1', [id]);
-      return result.rows[0] as Reward | undefined;
-    } finally {
-      client.release();
-    }
+    const { data, error } = await supabase
+      .from('rewards')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error && error.code !== 'PGRST116') throw error;
+    return data as Reward | undefined;
   }
 
   async createReward(reward: InsertReward): Promise<Reward> {
-    const client = await pool.connect();
-    try {
-      const result = await client.query(
-        `INSERT INTO rewards (
-          id, type, coin_address, coin_symbol, transaction_hash, 
-          reward_amount, reward_currency, recipient_address, created_at
-        ) VALUES (
-          gen_random_uuid()::text, $1, $2, $3, $4, $5, $6, $7, NOW()
-        ) RETURNING *`,
-        [
-          reward.type, reward.coinAddress, reward.coinSymbol, reward.transactionHash,
-          reward.rewardAmount, reward.rewardCurrency || 'ZORA', reward.recipientAddress
-        ]
-      );
-      return result.rows[0] as Reward;
-    } finally {
-      client.release();
-    }
+    const { data, error } = await supabase
+      .from('rewards')
+      .insert({
+        type: reward.type,
+        coin_address: reward.coinAddress,
+        coin_symbol: reward.coinSymbol,
+        transaction_hash: reward.transactionHash,
+        reward_amount: reward.rewardAmount,
+        reward_currency: reward.rewardCurrency || 'ZORA',
+        recipient_address: reward.recipientAddress,
+        created_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data as Reward;
   }
 
   async getAllRewards(): Promise<Reward[]> {
-    const client = await pool.connect();
-    try {
-      const result = await client.query('SELECT * FROM rewards ORDER BY created_at DESC');
-      return result.rows as Reward[];
-    } finally {
-      client.release();
-    }
+    const { data, error } = await supabase
+      .from('rewards')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data as Reward[];
   }
 
   async getRewardsByCoin(coinAddress: string): Promise<Reward[]> {
-    const client = await pool.connect();
-    try {
-      const result = await client.query(
-        'SELECT * FROM rewards WHERE coin_address = $1 ORDER BY created_at DESC',
-        [coinAddress]
-      );
-      return result.rows as Reward[];
-    } finally {
-      client.release();
-    }
+    const { data, error } = await supabase
+      .from('rewards')
+      .select('*')
+      .eq('coin_address', coinAddress)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data as Reward[];
   }
 
   async getRewardsByRecipient(recipientAddress: string): Promise<Reward[]> {
-    const client = await pool.connect();
-    try {
-      const result = await client.query(
-        'SELECT * FROM rewards WHERE recipient_address = $1 ORDER BY created_at DESC',
-        [recipientAddress]
-      );
-      return result.rows as Reward[];
-    } finally {
-      client.release();
-    }
+    const { data, error } = await supabase
+      .from('rewards')
+      .select('*')
+      .eq('recipient_address', recipientAddress)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data as Reward[];
   }
 
   // ===== CREATORS =====
   async getCreator(id: string): Promise<Creator | undefined> {
-    const client = await pool.connect();
-    try {
-      const result = await client.query('SELECT * FROM creators WHERE id = $1', [id]);
-      return result.rows[0] as Creator | undefined;
-    } finally {
-      client.release();
-    }
+    const { data, error } = await supabase
+      .from('creators')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error && error.code !== 'PGRST116') throw error;
+    return data as Creator | undefined;
   }
 
   async getCreatorByAddress(address: string): Promise<Creator | undefined> {
-    const client = await pool.connect();
-    try {
-      const result = await client.query('SELECT * FROM creators WHERE address = $1', [address]);
-      return result.rows[0] as Creator | undefined;
-    } finally {
-      client.release();
-    }
+    const { data, error } = await supabase
+      .from('creators')
+      .select('*')
+      .eq('address', address)
+      .single();
+
+    if (error && error.code !== 'PGRST116') throw error;
+    return data as Creator | undefined;
   }
 
   async getCreatorByReferralCode(referralCode: string): Promise<Creator | undefined> {
-    const client = await pool.connect();
-    try {
-      const result = await client.query('SELECT * FROM creators WHERE referral_code = $1', [referralCode]);
-      return result.rows[0] as Creator | undefined;
-    } finally {
-      client.release();
-    }
+    const { data, error } = await supabase
+      .from('creators')
+      .select('*')
+      .eq('referral_code', referralCode)
+      .single();
+
+    if (error && error.code !== 'PGRST116') throw error;
+    return data as Creator | undefined;
   }
 
   async createCreator(creator: InsertCreator): Promise<Creator> {
-    const client = await pool.connect();
-    try {
-      const result = await client.query(
-        `INSERT INTO creators (
-          id, address, name, bio, avatar, verified, total_coins, 
-          total_volume, followers, referral_code, points, created_at, updated_at
-        ) VALUES (
-          gen_random_uuid()::text, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW()
-        ) RETURNING *`,
-        [
-          creator.address, creator.name, creator.bio, creator.avatar,
-          creator.verified || 'false', creator.totalCoins || '0',
-          creator.totalVolume || '0', creator.followers || '0',
-          creator.referralCode || null, creator.points || '0'
-        ]
-      );
-      return result.rows[0] as Creator;
-    } finally {
-      client.release();
-    }
+    const { data, error } = await supabase
+      .from('creators')
+      .insert({
+        address: creator.address,
+        name: creator.name,
+        bio: creator.bio,
+        avatar: creator.avatar,
+        verified: creator.verified || 'false',
+        total_coins: creator.totalCoins || '0',
+        total_volume: creator.totalVolume || '0',
+        followers: creator.followers || '0',
+        referral_code: creator.referralCode || null,
+        points: creator.points || '0',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data as Creator;
   }
 
   async updateCreator(id: string, update: UpdateCreator): Promise<Creator | undefined> {
-    const client = await pool.connect();
-    try {
-      const fields: string[] = [];
-      const values: any[] = [];
-      let paramCount = 1;
+    const updates: any = {
+      updated_at: new Date().toISOString()
+    };
 
-      if (update.name !== undefined) {
-        fields.push(`name = $${paramCount++}`);
-        values.push(update.name);
-      }
-      if (update.bio !== undefined) {
-        fields.push(`bio = $${paramCount++}`);
-        values.push(update.bio);
-      }
-      if (update.avatar !== undefined) {
-        fields.push(`avatar = $${paramCount++}`);
-        values.push(update.avatar);
-      }
-      if (update.verified !== undefined) {
-        fields.push(`verified = $${paramCount++}`);
-        values.push(update.verified);
-      }
-      if (update.totalCoins !== undefined) {
-        fields.push(`total_coins = $${paramCount++}`);
-        values.push(update.totalCoins);
-      }
-      if (update.totalVolume !== undefined) {
-        fields.push(`total_volume = $${paramCount++}`);
-        values.push(update.totalVolume);
-      }
-      if (update.followers !== undefined) {
-        fields.push(`followers = $${paramCount++}`);
-        values.push(update.followers);
-      }
-      if (update.referralCode !== undefined) {
-        fields.push(`referral_code = $${paramCount++}`);
-        values.push(update.referralCode);
-      }
-      if (update.points !== undefined) {
-        fields.push(`points = $${paramCount++}`);
-        values.push(update.points);
-      }
+    if (update.name !== undefined) updates.name = update.name;
+    if (update.bio !== undefined) updates.bio = update.bio;
+    if (update.avatar !== undefined) updates.avatar = update.avatar;
+    if (update.verified !== undefined) updates.verified = update.verified;
+    if (update.totalCoins !== undefined) updates.total_coins = update.totalCoins;
+    if (update.totalVolume !== undefined) updates.total_volume = update.totalVolume;
+    if (update.followers !== undefined) updates.followers = update.followers;
+    if (update.referralCode !== undefined) updates.referral_code = update.referralCode;
+    if (update.points !== undefined) updates.points = update.points;
 
-      if (fields.length === 0) return this.getCreator(id);
+    const { data, error } = await supabase
+      .from('creators')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
 
-      fields.push(`updated_at = NOW()`);
-      values.push(id);
+    if (error) throw error;
+    return data as Creator;
+  }
 
-      const result = await client.query(
-        `UPDATE creators SET ${fields.join(', ')} WHERE id = $${paramCount} RETURNING *`,
-        values
-      );
-      return result.rows[0] as Creator | undefined;
-    } finally {
-      client.release();
+  // E1XP Points System Methods
+  async addPoints(creatorId: string, amount: number, reason: string): Promise<void> {
+    const creator = await this.getCreator(creatorId);
+    if (!creator) throw new Error('Creator not found');
+
+    const currentPoints = parseInt(creator.points || '0');
+    const newPoints = currentPoints + amount;
+
+    // Update creator points
+    await this.updateCreator(creatorId, { points: newPoints.toString() });
+
+    // Create notification for points earned
+    const notification = {
+      creator_id: creatorId,
+      type: 'points_earned',
+      title: '⚡ E1XP Points Earned!',
+      message: `You earned ${amount} E1XP points for ${reason}`,
+      metadata: {
+        points: amount,
+        reason,
+        totalPoints: newPoints,
+        shareText: `I just earned ${amount} E1XP points on @Every1Fun for ${reason}! Total: ${newPoints} ⚡\n\nJoin me: https://every1.fun/profile/${creatorId}\n\n#Every1Fun #E1XP #Web3`
+      },
+      read: false,
+      created_at: new Date().toISOString()
+    };
+
+    const { error } = await supabase
+      .from('notifications')
+      .insert(notification);
+
+    if (error) throw error;
+  }
+
+  async getDailyPoints(creatorId: string): Promise<{ claimed: boolean; streak: number }> {
+    const today = new Date().toISOString().split('T')[0];
+    
+    const { data, error } = await supabase
+      .from('daily_points')
+      .select('*')
+      .eq('creator_id', creatorId)
+      .eq('date', today)
+      .single();
+
+    if (error && error.code !== 'PGRST116') throw error;
+
+    // Get streak information
+    const { data: streakData, error: streakError } = await supabase
+      .from('daily_points')
+      .select('date')
+      .eq('creator_id', creatorId)
+      .order('date', { ascending: false });
+
+    if (streakError) throw streakError;
+
+    let streak = 0;
+    if (streakData && streakData.length > 0) {
+      const dates = streakData.map(d => new Date(d.date));
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      
+      if (dates[0].toISOString().split('T')[0] === yesterday.toISOString().split('T')[0]) {
+        for (let i = 0; i < dates.length; i++) {
+          const expectedDate = new Date();
+          expectedDate.setDate(expectedDate.getDate() - (i + 1));
+          if (dates[i].toISOString().split('T')[0] === expectedDate.toISOString().split('T')[0]) {
+            streak++;
+          } else break;
+        }
+      }
     }
+
+    return {
+      claimed: !!data,
+      streak
+    };
+  }
+
+  async claimDailyPoints(creatorId: string): Promise<number> {
+    const { claimed, streak } = await this.getDailyPoints(creatorId);
+    if (claimed) throw new Error('Daily points already claimed');
+
+    const basePoints = 10;
+    const streakBonus = Math.floor(streak / 7) * 5; // +5 points for every week of streak
+    const totalPoints = basePoints + streakBonus;
+
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Record daily points claim
+    const { error } = await supabase
+      .from('daily_points')
+      .insert({
+        creator_id: creatorId,
+        date: today,
+        points: totalPoints
+      });
+
+    if (error) throw error;
+
+    // Add points and create notification
+    await this.addPoints(
+      creatorId,
+      totalPoints,
+      `daily login (${streak + 1} day streak)`
+    );
+
+    return totalPoints;
   }
 
   async getAllCreators(): Promise<Creator[]> {
-    const client = await pool.connect();
-    try {
-      const result = await client.query('SELECT * FROM creators ORDER BY created_at DESC');
-      return result.rows as Creator[];
-    } finally {
-      client.release();
-    }
+    const { data, error } = await supabase
+      .from('creators')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data as Creator[];
   }
 
   async getTopCreators(): Promise<Creator[]> {
-    const client = await pool.connect();
-    try {
-      const result = await client.query(
-        'SELECT * FROM creators ORDER BY total_coins DESC LIMIT 10'
-      );
-      return result.rows as Creator[];
-    } finally {
-      client.release();
+    const { data, error } = await supabase
+      .from('creators')
+      .select('*')
+      .order('total_coins', { ascending: false })
+      .limit(10);
+
+    if (error) throw error;
+    return data as Creator[];
+  }
+
+  // Points System Methods
+  async awardPoints(creatorId: string, amount: number, reason: string, type: NotificationType): Promise<void> {
+    const creator = await this.getCreator(creatorId);
+    if (!creator) throw new Error('Creator not found');
+
+    const currentPoints = parseInt(creator.points || '0');
+    const newPoints = currentPoints + amount;
+
+    // Update creator points
+    await this.updateCreator(creatorId, { points: newPoints.toString() });
+
+    // Create notification for points earned
+    await this.createNotification({
+      creator_id: creatorId,
+      type,
+      title: '⚡ E1XP Points Earned!',
+      message: `You earned ${amount} E1XP points for ${reason}`,
+      metadata: {
+        points: amount,
+        reason,
+        totalPoints: newPoints,
+        shareText: `I just earned ${amount} E1XP points on @Every1Fun for ${reason}! Total: ${newPoints} ⚡\n\nJoin me: https://every1.fun/profile/${creatorId}\n\n#Every1Fun #E1XP #Web3`
+      },
+      read: false
+    });
+  }
+
+  async getDailyPointsStatus(creatorId: string): Promise<{ claimed: boolean; streak: number; nextClaimAmount: number }> {
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Check if already claimed today
+    const { data: claimData, error: claimError } = await supabase
+      .from('daily_points')
+      .select('*')
+      .eq('creator_id', creatorId)
+      .eq('date', today)
+      .single();
+
+    if (claimError && claimError.code !== 'PGRST116') throw claimError;
+
+    // Get streak information
+    const { data: streakData, error: streakError } = await supabase
+      .from('daily_points')
+      .select('date')
+      .eq('creator_id', creatorId)
+      .order('date', { ascending: false });
+
+    if (streakError) throw streakError;
+
+    // Calculate current streak
+    let streak = 0;
+    if (streakData && streakData.length > 0) {
+      const dates = streakData.map(d => new Date(d.date));
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      
+      if (dates[0].toISOString().split('T')[0] === yesterday.toISOString().split('T')[0]) {
+        for (let i = 0; i < dates.length; i++) {
+          const expectedDate = new Date();
+          expectedDate.setDate(expectedDate.getDate() - (i + 1));
+          if (dates[i].toISOString().split('T')[0] === expectedDate.toISOString().split('T')[0]) {
+            streak++;
+          } else break;
+        }
+      }
     }
+
+    // Calculate next claim amount
+    const basePoints = 10;
+    const streakBonus = Math.floor(streak / 7) * 5; // +5 points for every week of streak
+    const nextClaimAmount = basePoints + streakBonus;
+
+    return {
+      claimed: !!claimData,
+      streak,
+      nextClaimAmount
+    };
+  }
+
+  async claimDailyPoints(creatorId: string): Promise<number> {
+    const { claimed, streak, nextClaimAmount } = await this.getDailyPointsStatus(creatorId);
+    if (claimed) throw new Error('Daily points already claimed');
+
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Record daily points claim
+    const { error } = await supabase
+      .from('daily_points')
+      .insert({
+        creator_id: creatorId,
+        date: today,
+        points: nextClaimAmount
+      });
+
+    if (error) throw error;
+
+    // Add points and create notification
+    await this.awardPoints(
+      creatorId,
+      nextClaimAmount,
+      `daily login (${streak + 1} day streak)`,
+      'points_earned'
+    );
+
+    // Check for streak milestones
+    if ((streak + 1) % 7 === 0) {
+      await this.createNotification({
+        creator_id: creatorId,
+        type: 'streak_milestone',
+        title: '🎉 Weekly Streak Achievement!',
+        message: `Congratulations! You've maintained a ${streak + 1} day streak! Keep it up for more bonus points!`,
+        metadata: {
+          streakDays: streak + 1,
+          shareText: `I just hit a ${streak + 1} day streak on @Every1Fun! 🔥 Earning more E1XP points every day!\n\n#Every1Fun #E1XP #Web3`
+        },
+        read: false
+      });
+    }
+
+    return nextClaimAmount;
+  }
+
+  // Notification Methods
+  async createNotification(notification: {
+    creator_id: string;
+    type: NotificationType;
+    title: string;
+    message: string;
+    metadata?: NotificationMetadata;
+    read: boolean;
+  }): Promise<void> {
+    const { error } = await supabase
+      .from('notifications')
+      .insert({
+        ...notification,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      });
+
+    if (error) throw error;
+  }
+
+  async getUserNotifications(creatorId: string): Promise<UserNotification[]> {
+    const { data, error } = await supabase
+      .from('notifications')
+      .select('*')
+      .eq('creator_id', creatorId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data as UserNotification[];
+  }
+
+  async markNotificationAsRead(notificationId: string): Promise<void> {
+    const { error } = await supabase
+      .from('notifications')
+      .update({ read: true, updated_at: new Date().toISOString() })
+      .eq('id', notificationId);
+
+    if (error) throw error;
+  }
+
+  // Moderation Methods
+  async moderateUser(creatorId: string, action: ModerationType): Promise<void> {
+    const now = new Date();
+    const expiresAt = action.duration 
+      ? new Date(now.getTime() + action.duration * 24 * 60 * 60 * 1000)
+      : null;
+
+    // Create moderation action record
+    const { error: moderationError } = await supabase
+      .from('moderation_actions')
+      .insert({
+        creator_id: creatorId,
+        type: action.type,
+        reason: action.reason,
+        expires_at: expiresAt?.toISOString(),
+        created_at: now.toISOString(),
+        updated_at: now.toISOString()
+      });
+
+    if (moderationError) throw moderationError;
+
+    // Update creator status
+    const updates: any = {
+      status: action.type === 'warning' ? 'warned' : action.type,
+      restricted_until: expiresAt?.toISOString(),
+      updated_at: now.toISOString()
+    };
+
+    const { error: updateError } = await supabase
+      .from('creators')
+      .update(updates)
+      .eq('id', creatorId);
+
+    if (updateError) throw updateError;
+
+    // Create notification for the user
+    const notification = {
+      creator_id: creatorId,
+      type: `account_${action.type}`,
+      title: `Account ${action.type === 'warning' ? 'Warning' : action.type === 'restrict' ? 'Restricted' : 'Banned'}`,
+      message: `Your account has been ${action.type === 'warning' ? 'warned' : action.type === 'restrict' ? 'restricted' : 'banned'} for the following reason: ${action.reason}`,
+      metadata: {
+        type: action.type,
+        reason: action.reason,
+        duration: action.duration,
+        expiresAt: expiresAt?.toISOString()
+      },
+      read: false,
+      created_at: now.toISOString(),
+      updated_at: now.toISOString()
+    };
+
+    const { error: notificationError } = await supabase
+      .from('notifications')
+      .insert(notification);
+
+    if (notificationError) throw notificationError;
+  }
+
+  async getModerationHistory(creatorId: string): Promise<ModerationType[]> {
+    const { data, error } = await supabase
+      .from('moderation_actions')
+      .select('*')
+      .eq('creator_id', creatorId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data as ModerationType[];
   }
 
   // ===== COMMENTS =====

@@ -1,10 +1,20 @@
 // ensure .env is loaded in development so process.env.DATABASE_URL is available
 import dotenv from 'dotenv';
-dotenv.config();
+import path from 'path';
+
+// Load the appropriate .env file based on NODE_ENV
+const envFile = process.env.NODE_ENV === 'development' ? '.env.development' : '.env';
+dotenv.config({ path: path.resolve(process.cwd(), envFile) });
+
+// Debug environment variables
+console.log('Environment variables loaded:');
+console.log('NEXT_PUBLIC_SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
+console.log('SUPABASE_SERVICE_ROLE_KEY:', process.env.SUPABASE_SERVICE_ROLE_KEY ? '****' : 'not set');
 
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
-import { storage } from "./storage";
+import { SupabaseStorage } from './supabase-storage';
+import { createE1XPRouter } from './routes/e1xp';
 import { autoMigrateOnStartup } from "./migrate-old-data";
 import { setupVite, serveStatic, log } from "./vite";
 import { initTelegramBot } from "./telegram-bot";
@@ -12,6 +22,7 @@ import { ActivityTrackerCron } from "./activity-tracker-cron";
 import { base } from "viem/chains";
 
 const app = express();
+const storage = new SupabaseStorage();
 
 declare module 'http' {
   interface IncomingMessage {

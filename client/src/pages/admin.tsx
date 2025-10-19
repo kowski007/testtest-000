@@ -5,9 +5,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Loader2, DollarSign, TrendingUp, Users, Coins, Activity, Zap, BarChart3, Clock, Settings, Wallet, ExternalLink } from "lucide-react";
+import { Loader2, DollarSign, TrendingUp, Users, Coins, Activity, Zap, BarChart3, Clock, Settings, Wallet, ExternalLink, Ban, AlertTriangle, BellRing } from "lucide-react";
 import Layout from "@/components/layout";
 import { PoolConfigDebugger } from "@/components/pool-config-debugger";
+import { ModeratorPanel } from "@/components/admin/moderator-panel";
 import type { Reward, Coin } from "@shared/schema";
 import { getCoin } from "@zoralabs/coins-sdk";
 import { base } from "viem/chains";
@@ -18,6 +19,60 @@ const BASE_CHAIN_ID = 8453;
 export default function Admin() {
   const { toast } = useToast();
   const [result, setResult] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState('overview');
+
+  // Add handlers for moderation and notifications
+  const handleModerateUser = async (action: any) => {
+    try {
+      const response = await fetch('/api/admin/moderate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(action),
+      });
+
+      if (!response.ok) throw new Error('Failed to moderate user');
+
+      toast({
+        title: 'Moderation Applied',
+        description: `Successfully applied ${action.type} action`,
+      });
+    } catch (error) {
+      console.error('Moderation failed:', error);
+      toast({
+        title: 'Moderation Failed',
+        description: 'Failed to apply moderation action',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleTestNotification = async (notification: any) => {
+    try {
+      const response = await fetch('/api/admin/test-notification', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(notification),
+      });
+
+      if (!response.ok) throw new Error('Failed to send test notification');
+
+      toast({
+        title: 'Test Notification Sent',
+        description: 'Successfully sent test notification(s)',
+      });
+    } catch (error) {
+      console.error('Notification test failed:', error);
+      toast({
+        title: 'Notification Test Failed',
+        description: 'Failed to send test notification(s)',
+        variant: 'destructive',
+      });
+    }
+  };
   const [totalVolume24h, setTotalVolume24h] = useState<number>(0);
   const [totalMarketCap, setTotalMarketCap] = useState<number>(0);
   const [totalHolders, setTotalHolders] = useState<number>(0);
@@ -301,24 +356,35 @@ export default function Admin() {
         </div>
 
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-6">
+          <TabsList className="grid w-full grid-cols-5 mb-6">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4" />
-              <span className="hidden sm:inline">Overview</span>
+              Overview
             </TabsTrigger>
             <TabsTrigger value="earnings" className="flex items-center gap-2">
-              <Wallet className="w-4 h-4" />
-              <span className="hidden sm:inline">Earnings</span>
+              <DollarSign className="w-4 h-4" />
+              Earnings
             </TabsTrigger>
             <TabsTrigger value="activity" className="flex items-center gap-2">
               <Activity className="w-4 h-4" />
-              <span className="hidden sm:inline">Activity</span>
+              Activity
+            </TabsTrigger>
+            <TabsTrigger value="moderation" className="flex items-center gap-2">
+              <Ban className="w-4 h-4" />
+              Moderation
             </TabsTrigger>
             <TabsTrigger value="tools" className="flex items-center gap-2">
               <Settings className="w-4 h-4" />
-              <span className="hidden sm:inline">Tools</span>
+              Tools
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="moderation">
+            <ModeratorPanel
+              onModerateUser={handleModerateUser}
+              onSendNotification={handleTestNotification}
+            />
+          </TabsContent>
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-4">
@@ -906,6 +972,48 @@ export default function Admin() {
               </Card>
 
               <PoolConfigDebugger />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="earnings">
+            <div className="grid gap-4">
+              {/* Add earnings content here */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Earnings Overview</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p>Earnings content will go here</p>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="activity">
+            <div className="grid gap-4">
+              {/* Add activity content here */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Activity Overview</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p>Activity content will go here</p>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="tools">
+            <div className="grid gap-4">
+              {/* Add tools content here */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Tools and Utilities</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p>Tools content will go here</p>
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
         </Tabs>
