@@ -1,5 +1,7 @@
 
 import { useState } from "react";
+import { useLocation } from "wouter";
+import { safeNavigate } from "@/lib/navigation";
 import { useMutation } from "@tanstack/react-query";
 import { Search, TrendingUp, Users, Heart, Eye, DollarSign, Loader2, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -68,8 +70,9 @@ async function analyzeUrl(url: string): Promise<AnalysisResult> {
   };
 }
 
-export default function Analyzer() {
+export default function Rewards() {
   const [url, setUrl] = useState("");
+  const [, setLocation] = useLocation();
   const [result, setResult] = useState<AnalysisResult | null>(null);
 
   const analyzeMutation = useMutation({
@@ -331,7 +334,7 @@ export default function Analyzer() {
                     className="spotify-button"
                     onClick={() => {
                       setUrl('');
-                      window.location.href = '/create';
+                      safeNavigate(setLocation, '/create');
                     }}
                   >
                     Create Coin Now

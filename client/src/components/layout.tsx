@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { Link, useLocation } from "wouter";
+import { safeNavigate } from "@/lib/navigation";
 import { Input } from "@/components/ui/input";
+import { safeNavigate } from "@/lib/navigation";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAccount } from "wagmi";
@@ -230,7 +232,7 @@ export default function Layout({ children }: LayoutProps) {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      setLocation(`/channels?search=${encodeURIComponent(searchQuery.trim())}`);
+      safeNavigate(setLocation, '/channels', { search: searchQuery.trim() });
     }
   };
 
@@ -311,7 +313,7 @@ export default function Layout({ children }: LayoutProps) {
                 className={getLinkClass(item.href)}
                 onClick={() => {
                   if (mobile) setMobileMenuOpen(false);
-                  setLocation(item.href);
+                  safeNavigate(setLocation, String(item.href));
                 }}
               >
                 <div className="relative flex-shrink-0">
@@ -479,7 +481,7 @@ export default function Layout({ children }: LayoutProps) {
                         ? "text-primary"
                         : "text-muted-foreground"
                     }`}
-                    onClick={() => setLocation(item.href)}
+                    onClick={() => safeNavigate(setLocation, String(item.href))}
                   >
                     <div className="relative flex-shrink-0">
                       {item.isAvatar && address ? (

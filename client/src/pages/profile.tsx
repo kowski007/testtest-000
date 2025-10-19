@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAccount } from "wagmi";
 import { useLocation } from "wouter";
+import { safeNavigate } from "@/lib/navigation";
 import type { Coin } from "@shared/schema";
 import Layout from "@/components/layout";
 import CoinCard from "@/components/coin-card";
@@ -414,7 +415,7 @@ export default function Profile() {
                 EDIT
               </button>
               <button
-                onClick={() => setLocation('/settings')}
+                onClick={() => safeNavigate(setLocation, '/settings')}
                 className="p-2 bg-muted/30 hover:bg-muted/40 rounded-full text-foreground transition-colors"
                 data-testid="button-settings"
               >

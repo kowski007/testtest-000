@@ -9,6 +9,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { formatDistanceToNow, isToday, isYesterday, differenceInMinutes } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLocation } from "wouter";
+import { safeNavigate } from "@/lib/navigation";
 import DailyPointsModal from "@/components/daily-points-modal"; // Assuming this component exists
 
 export default function Notifications() {
@@ -75,10 +76,10 @@ export default function Notifications() {
       }
     }
 
-    // Handle navigation based on notification type
-    if (notification.coinAddress) {
-      // Navigate to home and let the coin modal open
-      setLocation(`/`);
+        // Handle navigation based on notification type
+    if (notification.metadata?.coinId) {
+      // Navigate to home with coin id as query param
+      safeNavigate(setLocation, '/', { coin: notification.metadata.coinId });
     }
   };
 
