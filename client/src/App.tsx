@@ -25,6 +25,7 @@ import Referrals from "@/pages/referrals";
 import Docs from "@/pages/docs";
 import AdminMetrics from "@/pages/AdminMetrics";
 import PublicProfile from "@/pages/public-profile";
+import CoinDetails from "@/pages/coin";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState } from "react";
@@ -47,6 +48,7 @@ function Router() {
       <Route path="/docs" component={Docs} />
       <Route path="/admin" component={Admin} />
       <Route path="/admin/metrics" component={AdminMetrics} />
+      <Route path="/coin/:symbol/:address" component={CoinDetails} />
       <Route path="/@:username" component={PublicProfile} />
       <Route path="/:identifier" component={PublicProfile} />
       <Route component={NotFound} />

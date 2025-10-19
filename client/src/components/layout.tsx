@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo } from "react";
 import { Link, useLocation } from "wouter";
 import { safeNavigate } from "@/lib/navigation";
 import { Input } from "@/components/ui/input";
-import { safeNavigate } from "@/lib/navigation";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAccount } from "wagmi";
@@ -238,8 +237,9 @@ export default function Layout({ children }: LayoutProps) {
 
   // Helper function to get link class
   const getLinkClass = (href: string) => {
+    const isCurrentPath = location === href || (href === "/" && location === "");
     return `flex items-center gap-3 p-2 rounded-lg transition-colors cursor-pointer relative ${
-      location === href
+      isCurrentPath
         ? "text-foreground bg-primary/20"
         : "text-muted-foreground hover:text-foreground hover:bg-muted/10"
     }`;
@@ -257,16 +257,18 @@ export default function Layout({ children }: LayoutProps) {
   ];
 
   const mobileNavItems = useMemo(() => {
-    const profileHref = address
-      ? (username && username !== address ? `/@${username}` : `/${address}`)
-      : "/profile";
+    const profileHref = !address 
+      ? "/profile"
+      : username && username !== address 
+        ? `/@${encodeURIComponent(username)}`
+        : `/${encodeURIComponent(address)}`;
 
     return [
       { href: "/", icon: Compass, label: "Explore", showBadge: true, badgeType: 'coins' },
       { href: "/search", icon: Search, label: "Search" },
       { href: "/create", icon: Plus, label: "Create" },
       { href: "/creators", icon: Users, label: "Creators", showBadge: true, badgeType: 'creators' },
-      { href: String(profileHref), icon: User, label: "Profile", isAvatar: true },
+      { href: profileHref, icon: User, label: "Profile", isAvatar: true },
     ];
   }, [address, username]);
 
@@ -277,16 +279,17 @@ export default function Layout({ children }: LayoutProps) {
 
     return (
       <div className={`bg-sidebar ${mobile ? 'p-4' : 'p-6'} flex flex-col h-full`}>
-        <Link href="/">
-          <div className="flex items-center gap-2 mb-8 cursor-pointer hover:opacity-80 transition-opacity">
-            <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-              <Play className="w-4 h-4 text-black fill-current" />
-            </div>
-            {(!sidebarCollapsed || mobile) && (
-              <span className="text-2xl font-bold text-foreground">Every1.fun</span>
-            )}
+        <div 
+          onClick={() => safeNavigate(setLocation, "/")}
+          className="flex items-center gap-2 mb-8 cursor-pointer hover:opacity-80 transition-opacity"
+        >
+          <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+            <Play className="w-4 h-4 text-black fill-current" />
           </div>
-        </Link>
+          {(!sidebarCollapsed || mobile) && (
+            <span className="text-2xl font-bold text-foreground">Every1.fun</span>
+          )}
+        </div>
 
         <nav className="space-y-4 mb-8 flex-1">
           {items.map((item) => {
@@ -390,14 +393,15 @@ export default function Layout({ children }: LayoutProps) {
           <p className="text-sm text-muted-foreground mb-3">
             Turn any blog post into a tradeable digital asset.
           </p>
-          <Link href="/create">
-            <button
-              className="spotify-button w-full"
-              onClick={() => mobile && setMobileMenuOpen(false)}
-            >
-              Get Started
-            </button>
-          </Link>
+          <button
+            className="spotify-button w-full"
+            onClick={() => {
+              if (mobile) setMobileMenuOpen(false);
+              safeNavigate(setLocation, "/create");
+            }}
+          >
+            Get Started
+          </button>
         </div>
       )}
 

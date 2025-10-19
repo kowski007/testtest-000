@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
+import { safeNavigate } from "@/lib/navigation";
 import type { Coin } from "@shared/schema";
 import CoinCard from "@/components/coin-card";
 import Layout from "@/components/layout";
@@ -35,6 +36,7 @@ type CoinWithPlatform = Coin & { platform?: string };
 
 export default function Home() {
   const { address, isConnected } = useAccount();
+  const [, setLocation] = useLocation();
   const { data: coins = [], isLoading } = useQuery<CoinWithPlatform[]>({
     queryKey: ["/api/coins"],
   });
@@ -109,7 +111,10 @@ export default function Home() {
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      setSelectedCategory(category.id);
+                      // Only change state, don't navigate
+                      if (category.id !== selectedCategory) {
+                        setSelectedCategory(category.id);
+                      }
                     }}
                     onPointerDown={(e) => {
                       e.preventDefault();
@@ -192,9 +197,13 @@ export default function Home() {
               </Link>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-1.5">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-1.5">
               {filteredCoins.map((coin) => (
-                <CoinCard key={coin.id} coin={coin} />
+                <CoinCard 
+                  key={coin.id} 
+                  coin={coin as any} 
+                  handleCardClick={() => coin.address && safeNavigate(setLocation, `/coin/${coin.symbol}/${coin.address}`)}
+                />
               ))}
             </div>
           )}

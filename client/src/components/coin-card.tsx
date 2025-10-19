@@ -21,6 +21,8 @@ import {
   Play,
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
+import { useLocation } from "wouter";
+import { safeNavigate } from "@/lib/navigation";
 import { parseEther, formatEther } from "viem";
 import { useAccount, usePublicClient, useWalletClient } from "wagmi";
 import { getCoin, getCoinHolders } from "@zoralabs/coins-sdk";
@@ -492,6 +494,8 @@ export default function CoinCard({
     }
   };
 
+  const [, navigate] = useLocation();
+
   const handleCardClickWrapper = (e?: React.MouseEvent) => {
     if (e) {
       e.preventDefault();
@@ -501,8 +505,9 @@ export default function CoinCard({
       nextStep();
     } else if (handleCardClick) {
       handleCardClick();
-    } else if (!isOwnCoin) {
-      setTradeDialogOpen(true);
+    } else if (!isOwnCoin && coin.address) {
+      // Always navigate to coin details page
+      safeNavigate(navigate, `/coin/${coin.symbol}/${coin.address}`);
     }
   };
 

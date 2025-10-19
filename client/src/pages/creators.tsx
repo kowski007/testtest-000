@@ -114,6 +114,12 @@ export default function Creators() {
     }
   }, [creators, coins]);
 
+  // Fetch creator stats for e1xp points
+  const { data: creatorStats = {} } = useQuery({
+    queryKey: ['/api/creators/stats'],
+    enabled: creators.length > 0,
+  });
+
   const enrichedCreators = creators.map((creator) => {
     const creatorCoins = coins.filter(
       (coin) => coin.creator_wallet?.toLowerCase() === creator.address.toLowerCase(),
@@ -123,6 +129,7 @@ export default function Creators() {
     const totalMarketCap = creatorMarketCaps[creator.address] || "0.0000";
     const totalHolders = creatorHolders[creator.address] || 0;
     const totalEarnings = creatorEarnings[creator.address] || 0;
+    const e1xpPoints = creatorStats[creator.address]?.e1xpPoints || 0;
 
     // Calculate total volume from coin creation (mock for now as we don't track actual trading volume)
     const totalVolume = (creatorCoins.length * 0.001).toFixed(3);
@@ -134,6 +141,7 @@ export default function Creators() {
       totalMarketCap,
       totalHolders,
       totalEarnings,
+      e1xpPoints,
       coins: creatorCoins,
       // Use database avatar (prioritize avatar field, then profileImage) or generate dicebear avatar as fallback only if no custom avatar exists
       avatarUrl: creator.avatar || creator.profileImage || createAvatar(avataaars, {
@@ -462,6 +470,15 @@ export default function Creators() {
                             Earnings
                           </div>
                         </div>
+                        <div className="text-center">
+                          <div className="text-yellow-500 font-bold text-sm flex items-center justify-center gap-1" data-testid={`mobile-e1xp-${creator.address}`}>
+                            <Star className="w-3 h-3" />
+                            {creator.e1xpPoints || 0}
+                          </div>
+                          <div className="text-muted-foreground text-[10px]">
+                            E1XP
+                          </div>
+                        </div>
                       </div>
                     </div>
 
@@ -487,7 +504,7 @@ export default function Creators() {
                           </div>
                         )}
                       </div>
-                      <div className="flex-1 min-w-0 grid grid-cols-5 gap-2 items-center">
+                      <div className="flex-1 min-w-0 grid grid-cols-6 gap-2 items-center">
                         <div className="min-w-0">
                           <h3 className="text-foreground font-bold text-sm truncate flex items-center gap-1" data-testid={`name-${creator.address}`}>
                             {creator.name || formatAddress(creator.address)}
@@ -531,7 +548,15 @@ export default function Creators() {
                             Earnings
                           </div>
                         </div>
-                        
+                        <div className="text-center">
+                          <div className="text-yellow-500 font-bold text-sm flex items-center justify-center gap-1" data-testid={`e1xp-${creator.address}`}>
+                            <Star className="w-3 h-3" />
+                            {creator.e1xpPoints || 0}
+                          </div>
+                          <div className="text-muted-foreground text-[10px]">
+                            E1XP
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>

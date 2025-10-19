@@ -19,7 +19,8 @@ import {
   Users,
   Coins as CoinsIcon,
   ChevronRight,
-  Settings as SettingsIcon
+  Settings as SettingsIcon,
+  Star
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getCoin } from "@zoralabs/coins-sdk";
@@ -407,6 +408,14 @@ export default function Profile() {
             </button>
             <div className="flex items-center gap-2">
               <button
+                onClick={() => safeNavigate(setLocation, '/settings?tab=referral')}
+                className="px-3 py-2 bg-yellow-500/20 hover:bg-yellow-500/30 rounded-full text-sm font-semibold text-yellow-500 transition-colors flex items-center gap-1.5"
+                title="View E1XP Points"
+              >
+                <Star className="w-3.5 h-3.5" />
+                {isLoadingCreatorStats ? '...' : creatorStats?.e1xpPoints || 0} E1XP
+              </button>
+              <button
                 onClick={() => setIsEditModalOpen(true)}
                 className="px-4 py-2 bg-muted/30 hover:bg-muted/40 rounded-full text-sm font-semibold text-foreground transition-colors flex items-center gap-2"
                 data-testid="button-edit-profile"
@@ -464,55 +473,83 @@ export default function Profile() {
           </div>
 
           {/* Stats Grid - Compact */}
-          <div className="grid grid-cols-4 gap-2 mb-4">
-            <div className="text-center">
-              <div className="text-xl font-bold text-gray-900 dark:text-white mb-1">
-                {isLoadingStats || isLoadingCoins ? '-' : createdCoins.length}
+          <div className="grid grid-cols-3 gap-x-8 gap-y-3 mb-6 px-4">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                <CoinsIcon className="w-4 h-4 text-primary" />
               </div>
-              <div className="text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wide">Coins</div>
+              <div className="min-w-0">
+                <div className="text-sm font-medium text-muted-foreground">Coins</div>
+                <div className="text-base font-bold text-foreground">
+                  {isLoadingStats || isLoadingCoins ? '-' : createdCoins.length}
+                </div>
+              </div>
             </div>
 
-            <div className="text-center">
-              <div className="text-xl font-bold text-gray-900 dark:text-white mb-1">
-                {isLoadingCreatorData ? '-' : parseInt(creatorData?.followers || '0')}
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center">
+                <Users className="w-4 h-4 text-blue-500" />
               </div>
-              <div className="text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wide">Followers</div>
+              <div className="min-w-0">
+                <div className="text-sm font-medium text-muted-foreground">Followers</div>
+                <div className="text-base font-bold text-foreground">
+                  {isLoadingCreatorData ? '-' : parseInt(creatorData?.followers || '0')}
+                </div>
+              </div>
             </div>
 
-            <div className="text-center">
-              <div className="text-xl font-bold text-gray-900 dark:text-white mb-1">
-                {followingCount}
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-purple-500/10 flex items-center justify-center">
+                <Users className="w-4 h-4 text-purple-500" />
               </div>
-              <div className="text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wide">Following</div>
+              <div className="min-w-0">
+                <div className="text-sm font-medium text-muted-foreground">Following</div>
+                <div className="text-base font-bold text-foreground">
+                  {followingCount}
+                </div>
+              </div>
             </div>
 
-            <div className="text-center">
-              <div className="text-xl font-bold text-gray-900 dark:text-white mb-1">
-                {isLoadingStats ? '-' : totalMarketCap >= 1000000
-                  ? `$${(totalMarketCap / 1000000).toFixed(2)}M`
-                  : totalMarketCap >= 1000
-                    ? `$${(totalMarketCap / 1000).toFixed(1)}k`
-                    : `$${totalMarketCap.toFixed(2)}`}
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center">
+                <TrendingUp className="w-4 h-4 text-green-500" />
               </div>
-              <div className="text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wide">Market Cap</div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2 mb-6">
-            <div className="text-center">
-              <div className="text-xl font-bold text-gray-900 dark:text-white mb-1">
-                {isLoadingStats ? '-' : totalHolders}
+              <div className="min-w-0">
+                <div className="text-sm font-medium text-muted-foreground">Market Cap</div>
+                <div className="text-base font-bold text-foreground">
+                  {isLoadingStats ? '-' : totalMarketCap >= 1000000
+                    ? `$${(totalMarketCap / 1000000).toFixed(1)}M`
+                    : totalMarketCap >= 1000
+                      ? `$${(totalMarketCap / 1000).toFixed(1)}k`
+                      : `$${totalMarketCap.toFixed(0)}`}
+                </div>
               </div>
-              <div className="text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wide">Holders</div>
             </div>
 
-            <div className="text-center">
-              <div className="text-xl font-bold text-green-500 mb-1">
-                {isLoadingStats ? '-' : totalEarnings >= 1000
-                  ? `$${(totalEarnings / 1000).toFixed(1)}k`
-                  : `$${totalEarnings.toFixed(2)}`}
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-orange-500/10 flex items-center justify-center">
+                <Users className="w-4 h-4 text-orange-500" />
               </div>
-              <div className="text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wide">Earnings</div>
+              <div className="min-w-0">
+                <div className="text-sm font-medium text-muted-foreground">Holders</div>
+                <div className="text-base font-bold text-foreground">
+                  {isLoadingStats ? '-' : totalHolders.toLocaleString()}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center">
+                <DollarSign className="w-4 h-4 text-green-500" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-sm font-medium text-muted-foreground">Earnings</div>
+                <div className="text-base font-bold text-green-500">
+                  {isLoadingStats ? '-' : totalEarnings >= 1000
+                    ? `$${(totalEarnings / 1000).toFixed(1)}k`
+                    : `$${totalEarnings.toFixed(0)}`}
+                </div>
+              </div>
             </div>
           </div>
 
@@ -739,7 +776,7 @@ export default function Profile() {
             </p>
             {selectedTab === "created" && (
               <Button
-                onClick={() => setLocation('/create-coin')}
+                onClick={() => safeNavigate(setLocation, '/create-coin')}
                 className="bg-primary hover:bg-primary/90 text-black font-bold rounded-xl h-11 px-6"
               >
                 Create Your Coin
